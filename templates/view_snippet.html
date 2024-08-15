@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if snippet.title %}{{ snippet.title }}{% else %}Untitled Snippet{% endif %}</title>
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/theme/dracula.min.css">
+    <!-- Prettier CSS (if needed) -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .meta {
+            font-size: 0.9em;
+            color: #999;
+            margin-top: 20px;
+        }
+        .meta a {
+            color: #337ab7;
+            text-decoration: none;
+        }
+        .meta a:hover {
+            text-decoration: underline;
+        }
+        .language-label {
+            font-size: 0.9em;
+            color: #999;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        #editor-container {
+            margin-top: 20px;
+        }
+        .CodeMirror {
+            border: 1px solid #ddd;
+            height: auto;
+            max-height: 600px; /* Adjust based on your needs */
+        }
+        .format-button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .format-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{% if snippet.title %}{{ snippet.title }}{% else %}Untitled Snippet{% endif %}</h1>
+        <p class="language-label">Language: {{ snippet.get_language_display }}</p>
+        <div id="editor-container">
+            <textarea id="code" name="code" style="display:none;">{{ snippet.content|safe }}</textarea>
+            <button class="format-button" onclick="formatCode()">Format Code</button>
+        </div>
+        <p class="meta">Created at: {{ snippet.created_at }}</p>
+        <p class="meta"><a href="{% url 'create_snippet' %}">Create Another Snippet</a></p>
+    </div>
+
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/markdown/markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/plaintext/plaintext.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/addon/edit/closetag.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/addon/edit/formatting.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.4/prettier.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.4/parser-babel.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var mode = 'plaintext'; // Default mode
+            var language = '{{ snippet.language }}';
+
+            if (language === 'javascript') mode = 'javascript';
+            else if (language === 'html') mode = 'htmlmixed';
+            else if (language === 'css') mode = 'css';
+            else if (language === 'python') mode = 'python';
+
+            var editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+                mode: mode,
+                theme: 'dracula',
+                lineNumbers: true,
+                readOnly: true,
+                lineWrapping: true,
+                matchBrackets: true
+            });
+
+            window.formatCode = function() {
+                var code = editor.getValue();
+                var formattedCode;
+
+                try {
+                    if (language === 'javascript') {
+                        formattedCode = prettier.format(code, { parser: 'babel' });
+                    } else if (language === 'html') {
+                        formattedCode = prettier.format(code, { parser: 'html' });
+                    } else if (language === 'css') {
+                        formattedCode = prettier.format(code, { parser: 'css' });
+                    } else if (language === 'python') {
+                        // Note: Prettier does not support Python formatting
+                        formattedCode = code; // No formatting for Python
+                    }
+                    editor.setValue(formattedCode);
+                } catch (error) {
+                    console.error('Formatting error:', error);
+                }
+            };
+        });
+    </script>
+</body>
+</html>
