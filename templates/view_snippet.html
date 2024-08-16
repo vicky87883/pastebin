@@ -7,6 +7,7 @@
     <!-- CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/theme/dracula.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Prettier CSS (if needed) -->
     <style>
         body {
@@ -46,11 +47,12 @@
         }
         #editor-container {
             margin-top: 20px;
+            position: relative;
         }
         .CodeMirror {
             border: 1px solid #ddd;
-            height: auto;
-            max-height: 600px; /* Adjust based on your needs */
+            height: 400px; /* Set a fixed height */
+            line-height: 1.5;
         }
         .format-button {
             margin-top: 10px;
@@ -73,7 +75,7 @@
         <p class="language-label">Language: {{ snippet.get_language_display }}</p>
         <div id="editor-container">
             <textarea id="code" name="code" style="display:none;">{{ snippet.content|safe }}</textarea>
-            <button class="format-button" onclick="formatCode()">Format Code</button>
+            <button class="format-button" onclick="copyCode()"><i class="fas fa-copy"></i> Copy Code</button>
         </div>
         <p class="meta">Created at: {{ snippet.created_at }}</p>
         <p class="meta"><a href="{% url 'create_snippet' %}">Create Another Snippet</a></p>
@@ -111,25 +113,13 @@
                 matchBrackets: true
             });
 
-            window.formatCode = function() {
+            window.copyCode = function() {
                 var code = editor.getValue();
-                var formattedCode;
-
-                try {
-                    if (language === 'javascript') {
-                        formattedCode = prettier.format(code, { parser: 'babel' });
-                    } else if (language === 'html') {
-                        formattedCode = prettier.format(code, { parser: 'html' });
-                    } else if (language === 'css') {
-                        formattedCode = prettier.format(code, { parser: 'css' });
-                    } else if (language === 'python') {
-                        // Note: Prettier does not support Python formatting
-                        formattedCode = code; // No formatting for Python
-                    }
-                    editor.setValue(formattedCode);
-                } catch (error) {
-                    console.error('Formatting error:', error);
-                }
+                navigator.clipboard.writeText(code).then(function() {
+                    alert('Code copied to clipboard!');
+                }).catch(function(error) {
+                    console.error('Copy failed:', error);
+                });
             };
         });
     </script>
