@@ -71,7 +71,7 @@
     <div class="container">
         <!-- Title Section -->
         <div class="section-title">
-            <span class="material-icons">title</span>Title
+            <span class="material-icons">title</span>Pastebin
         </div>
         <form method="post">
             {% csrf_token %}
@@ -79,13 +79,11 @@
                 <label for="id_title"><span class="material-icons">edit</span>Snippet Title</label>
                 {{ form.title }}
             </div>
-
             <!-- Language Section -->
             <div class="form-group">
                 <label for="id_language"><span class="material-icons">code</span>Language</label>
                 {{ form.language }}
             </div>
-
             <!-- Content Section -->
             <div class="form-group">
                 <label for="id_content"><span class="material-icons">notes</span>Snippet Content</label>
@@ -98,7 +96,6 @@
             </button>
         </form>
     </div>
-
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
