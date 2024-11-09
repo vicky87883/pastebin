@@ -6,120 +6,166 @@
     <title>{% if snippet.title %}{{ snippet.title }}{% else %}Untitled Snippet{% endif %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/theme/dracula.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* Page Background */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
+            background: #0d0d0d url('https://www.transparenttextures.com/patterns/cubes.png');
+            color: #f1f1f1;
         }
+        /* Main Container */
         .container {
             max-width: 800px;
-            margin: 0 auto;
+            margin: 50px auto;
             padding: 20px;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
         }
         h1 {
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 10px;
             margin-bottom: 20px;
+            font-size: 1.8em;
         }
-        .meta {
-            font-size: 0.9em;
-            color: #999;
-            margin-top: 20px;
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
-        .meta a {
-            color: #337ab7;
-            text-decoration: none;
-        }
-        .meta a:hover {
-            text-decoration: underline;
-        }
-        .language-label {
-            font-size: 0.9em;
-            color: #999;
-            margin-bottom: 10px;
-            display: inline-block;
-        }
-        #editor-container {
-            margin-top: 20px;
+        .modal-content {
+            background-color: #222;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 700px;
             position: relative;
         }
-        .CodeMirror {
-            border: 1px solid #ddd;
-            height: 400px; /* Set a fixed height */
-            line-height: 1.5;
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .format-button {
-            margin-top: 10px;
+        .close-btn {
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .format-button, .open-modal-btn {
             padding: 10px 15px;
-            border: none;
             background-color: #007bff;
+            border: none;
             color: white;
             cursor: pointer;
             font-size: 16px;
             border-radius: 5px;
+            transition: background-color 0.3s;
         }
-        .format-button:hover {
+        .format-button:hover, .open-modal-btn:hover {
             background-color: #0056b3;
+        }
+        .modal-content .CodeMirror {
+            border: 1px solid #555;
+            height: 400px;
+        }
+        /* Toast Notification */
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 16px;
+            border-radius: 5px;
+            position: fixed;
+            z-index: 1100;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 17px;
+        }
+        .toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+        @keyframes fadein {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+        @keyframes fadeout {
+            from {opacity: 1;}
+            to {opacity: 0;}
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>{% if snippet.title %}{{ snippet.title }}{% else %}Untitled Snippet{% endif %}</h1>
-        <p class="language-label">Language: {{ snippet.get_language_display }}</p>
-        <div id="editor-container">
-            <textarea id="code" name="code" style="display:none;">{{ snippet.content|safe }}</textarea>
-            <button class="format-button" onclick="copyCode()"><i class="fas fa-copy"></i> Copy Code</button>
-        </div>
-        <p class="meta">Created at: {{ snippet.created_at }}</p>
-        <p class="meta"><a href="{% url 'create_snippet' %}">Create Another Snippet</a></p>
+        <p>Language: {{ snippet.get_language_display }}</p>
+        <button class="open-modal-btn" onclick="openModal()">View Code Snippet</button>
     </div>
 
-    <!-- CodeMirror JS -->
+    <!-- Popup Modal -->
+    <div class="modal" id="codeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>{{ snippet.title }}</h2>
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+            </div>
+            <textarea id="code" style="display: none;">{{ snippet.content|safe }}</textarea>
+            <button class="format-button" onclick="copyCode()">Copy Code</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast">Code copied to clipboard!</div>
+
+    <!-- CodeMirror and JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/python/python.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/htmlmixed/htmlmixed.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/css/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/markdown/markdown.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/mode/plaintext/plaintext.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/addon/edit/matchbrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/addon/edit/closetag.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/addon/edit/formatting.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.4/prettier.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.4/parser-babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.1/theme/dracula.min.css"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var mode = 'plaintext'; // Default mode
-            var language = '{{ snippet.language }}';
+        var editor;
 
-            if (language === 'javascript') mode = 'javascript';
-            else if (language === 'html') mode = 'htmlmixed';
-            else if (language === 'css') mode = 'css';
-            else if (language === 'python') mode = 'python';
-
-            var editor = CodeMirror.fromTextArea(document.getElementById('code'), {
-                mode: mode,
-                theme: 'dracula',
-                lineNumbers: true,
-                readOnly: true,
-                lineWrapping: true,
-                matchBrackets: true
-            });
-
-            window.copyCode = function() {
-                var code = editor.getValue();
-                navigator.clipboard.writeText(code).then(function() {
-                    alert('Code copied to clipboard!');
-                }).catch(function(error) {
-                    console.error('Copy failed:', error);
+        function openModal() {
+            document.getElementById('codeModal').style.display = 'flex';
+            if (!editor) {
+                editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+                    mode: '{{ snippet.language }}',
+                    theme: 'dracula',
+                    lineNumbers: true,
+                    readOnly: true,
+                    lineWrapping: true
                 });
-            };
-        });
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('codeModal').style.display = 'none';
+        }
+
+        function copyCode() {
+            var code = editor.getValue();
+            navigator.clipboard.writeText(code).then(function() {
+                var toast = document.getElementById('toast');
+                toast.className = 'toast show';
+                setTimeout(function() { toast.className = toast.className.replace('show', ''); }, 3000);
+            }).catch(function(error) {
+                console.error('Copy failed:', error);
+            });
+        }
     </script>
 </body>
 </html>
