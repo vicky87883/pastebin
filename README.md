@@ -22,7 +22,7 @@ Clone the repository:
 
 bash
 Copy code
-git clone https://github.com/yourusername/pastebin.git
+git clone https://github.com/vicky87883/pastebin.git
 cd pastebin
 Create and activate a virtual environment:
 
